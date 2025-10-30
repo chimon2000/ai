@@ -1,0 +1,190 @@
+---
+trigger: always_on
+description: "Exhaustive type checking patterns in Dart/Flutter code"
+---
+
+#### Exhaustive Type Checking with Sealed Classes and Enums
+
+##### Principle
+
+When you have a known, finite set of subtypes or variants, always use patterns that enable compile-time exhaustive checking rather than runtime type checks or open inheritance hierarchies. This prevents silent bugs when new types are added but not handled everywhere they should be.
+
+##### Core Pattern: Use Sealed Classes for Type Hierarchies
+
+**✅ GOOD: Sealed class with exhaustive switch**
+```dart
+sealed class Result<T> {}
+
+class Success<T> extends Result<T> {
+  final T data;
+  Success(this.data);
+}
+
+class Failure<T> extends Result<T> {
+  final Exception error;
+  Failure(this.error);
+}
+
+// Compiler enforces all cases are handled
+String handleResult<T>(Result<T> result) {
+  return switch (result) {
+    Success(:final data) => 'Success: $data',
+    Failure(:final error) => 'Error: $error',
+    // Compiler error if new subtype added without handling it here
+  };
+}
+```
+
+**❌ BAD: Abstract class with runtime checks**
+```dart
+abstract class Result<T> {}
+
+class Success<T> extends Result<T> {
+  final T data;
+  Success(this.data);
+}
+
+class Failure<T> extends Result<T> {
+  final Exception error;
+  Failure(this.error);
+}
+
+// No compiler guarantee - easy to miss cases
+String handleResult<T>(Result<T> result) {
+  if (result is Success) {
+    return 'Success: ${result.data}';
+  } else if (result is Failure) {
+    return 'Error: ${result.error}';
+  }
+  return 'Unknown'; // Silent bug if new type added
+}
+```
+
+##### Pattern 1: Use Enums for Simple Value Sets
+
+**✅ GOOD: Enum with exhaustive switch**
+```dart
+enum Status { pending, loading, success, error }
+
+String getStatusMessage(Status status) {
+  return switch (status) {
+    Status.pending => 'Waiting to start',
+    Status.loading => 'Loading...',
+    Status.success => 'Complete',
+    Status.error => 'Failed',
+  };
+}
+```
+
+##### Pattern 2: Use Sealed Classes for Complex Type Hierarchies
+
+**✅ GOOD: Sealed class with pattern matching**
+```dart
+sealed class ApiResponse<T> {}
+
+class ApiSuccess<T> extends ApiResponse<T> {
+  final T data;
+  ApiSuccess(this.data);
+}
+
+class ApiError<T> extends ApiResponse<T> {
+  final int statusCode;
+  final String message;
+  ApiError(this.statusCode, this.message);
+}
+
+class ApiNetworkError<T> extends ApiResponse<T> {
+  final String message;
+  ApiNetworkError(this.message);
+}
+
+// Exhaustive pattern matching
+void handleResponse<T>(ApiResponse<T> response) {
+  switch (response) {
+    case ApiSuccess(:final data):
+      print('Success: $data');
+    case ApiError(:final statusCode, :final message):
+      print('Error $statusCode: $message');
+    case ApiNetworkError(:final message):
+      print('Network error: $message');
+  }
+}
+```
+
+##### Pattern 3: Use Switch Expressions for Pattern Matching
+
+**✅ GOOD: Exhaustive switch expression**
+```dart
+sealed class ApiResponse<T> {}
+
+class ApiSuccess<T> extends ApiResponse<T> {
+  final T data;
+  ApiSuccess(this.data);
+}
+
+class ApiError<T> extends ApiResponse<T> {
+  final int statusCode;
+  final String message;
+  ApiError(this.statusCode, this.message);
+}
+
+class ApiNetworkError<T> extends ApiResponse<T> {
+  final String message;
+  ApiNetworkError(this.message);
+}
+
+// Switch expression - more concise
+String getResponseMessage<T>(ApiResponse<T> response) => switch (response) {
+  ApiSuccess(:final data) => 'Success: $data',
+  ApiError(:final statusCode, :final message) => 'Error $statusCode: $message',
+  ApiNetworkError(:final message) => 'Network error: $message',
+};
+```
+
+##### When to Apply This Rule
+
+- **Always use sealed classes** for type hierarchies with known, finite subtypes
+- **Always use enums** for simple value sets (Status, Priority, etc.)
+- **Always use switch expressions** for pattern matching on sealed types
+- **Never use abstract classes** when you want exhaustive checking
+- **Never use runtime type checks** (is/as) when sealed classes are available
+- **Never use if-else chains** for type checking when switch is available
+
+##### Benefits
+
+- ✅ **Compile-time safety** - Compiler catches missing cases
+- ✅ **Refactoring safety** - Adding new types forces updates everywhere
+- ✅ **Self-documenting** - Code clearly shows all possible cases
+- ✅ **No silent bugs** - Can't accidentally miss a case
+- ✅ **Better performance** - No runtime type checks needed
+- ✅ **Cleaner code** - Pattern matching is more readable than if-else chains
+
+##### Anti-Patterns to Avoid
+
+**❌ BAD: Open inheritance with runtime checks**
+```dart
+abstract class Animal {}
+class Dog extends Animal {}
+class Cat extends Animal {}
+
+void makeSound(Animal animal) {
+  if (animal is Dog) print('Woof');
+  else if (animal is Cat) print('Meow');
+  // Silent bug: new Animal subtype won't be handled
+}
+```
+
+**✅ GOOD: Sealed class with exhaustive switch**
+```dart
+sealed class Animal {}
+class Dog extends Animal {}
+class Cat extends Animal {}
+
+void makeSound(Animal animal) {
+  switch (animal) {
+    case Dog(): print('Woof');
+    case Cat(): print('Meow');
+    // Compiler error if new Animal subtype added
+  }
+}
+```
