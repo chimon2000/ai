@@ -1,0 +1,93 @@
+---
+alwaysApply: true
+---
+#### Tidy First Principles
+
+- **Always make structural changes first** before behavioral changes
+- **Never mix structural and behavioral changes** - commit them separately
+- See `general.md` for core principles (DRY, intent clarity, small methods, minimal state)
+
+#### Workflow
+
+When approaching a new feature:
+
+1. **Identify needed structural changes** - Look at existing code
+2. **Make structural changes first** - Refactor, rename, reorganize
+3. **Run tests** - Ensure structural changes don't break anything
+4. **Commit structural changes** - Separate commit
+5. **Implement behavioral changes** - Add new feature with TDD (see `testing.md`)
+6. **Commit behavioral changes** - Separate commit
+
+#### Examples of Structural vs Behavioral Changes
+
+**Structural Changes (Tidy First):**
+- Renaming variables, methods, classes
+- Extracting methods or classes
+- Moving code to different files
+- Reorganizing imports
+- Removing dead code
+- Simplifying complex conditionals
+- Breaking up large methods
+
+**Behavioral Changes:**
+- Adding new features
+- Fixing bugs
+- Changing business logic
+- Modifying API responses
+- Updating UI behavior
+
+#### Example
+
+**❌ BAD - Mixed changes:**
+```dart
+// Single commit with both structural and behavioral changes
+class UserService {
+  // Renamed method (structural) AND added new feature (behavioral)
+  Future<Result<User>> fetchUserProfile(String id) async {
+    final response = await _api.get('/users/$id');
+    // New feature: cache user data
+    await _cache.set('user_$id', response);
+    return response;
+  }
+}
+```
+
+**✅ GOOD - Separated changes:**
+```dart
+// Commit 1: Structural change only
+class UserService {
+  // Renamed from getUser to fetchUserProfile
+  Future<Result<User>> fetchUserProfile(String id) async {
+    final response = await _api.get('/users/$id');
+    return response;
+  }
+}
+
+// Commit 2: Behavioral change only
+class UserService {
+  Future<Result<User>> fetchUserProfile(String id) async {
+    final response = await _api.get('/users/$id');
+    // New feature: cache user data
+    await _cache.set('user_$id', response);
+    return response;
+  }
+}
+```
+
+#### Benefits
+
+- **Easier code review** - Reviewers can focus on one type of change
+- **Safer refactoring** - Structural changes verified before adding features
+- **Better git history** - Clear separation of what changed and why
+- **Easier rollback** - Can revert behavioral changes without losing structural improvements
+- **Reduced bugs** - Less likely to introduce bugs when changes are isolated
+
+#### Integration with TDD
+
+See `testing.md` for full TDD workflow. The Tidy First principle integrates as:
+
+1. **Red** - Write failing test (behavioral)
+2. **Green** - Make test pass with minimal code (behavioral)
+3. **Refactor** - Make structural improvements (structural)
+4. **Commit** - Commit behavioral and structural changes separately if significant
+
