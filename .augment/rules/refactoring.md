@@ -1,0 +1,111 @@
+---
+type: "always_apply"
+description: "Guidelines applied when refactoring code."
+---
+
+#### Refactoring Guidelines
+
+- **Red-Green-Refactor cycle** - Refactor only when tests are passing (in the "Green" phase)
+- **One refactoring at a time** - Make a single, focused change per commit
+- **Run tests after each step** - Verify tests still pass after each refactoring
+- **Use IDE refactoring tools** - Leverage automated refactoring when available
+- **Leave code better than you found it** - Boy Scout Rule: improve code quality incrementally
+
+#### Common Refactoring Patterns
+
+**Extract Method:**
+Remove duplication by extracting repeated code into a reusable method.
+
+**❌ BAD: Duplicated logic**
+```dart
+void processUser(User user) {
+  // Validation logic repeated
+  if (user.name.isEmpty) throw Exception('Name required');
+  if (user.email.isEmpty) throw Exception('Email required');
+
+  saveUser(user);
+}
+
+void updateUser(User user) {
+  // Same validation logic repeated
+  if (user.name.isEmpty) throw Exception('Name required');
+  if (user.email.isEmpty) throw Exception('Email required');
+
+  updateUserInDb(user);
+}
+```
+
+**✅ GOOD: Extract to method**
+```dart
+void processUser(User user) {
+  _validateUser(user);
+  saveUser(user);
+}
+
+void updateUser(User user) {
+  _validateUser(user);
+  updateUserInDb(user);
+}
+
+void _validateUser(User user) {
+  if (user.name.isEmpty) throw Exception('Name required');
+  if (user.email.isEmpty) throw Exception('Email required');
+}
+```
+
+**Rename for Clarity:**
+Use clear, descriptive names that reveal intent.
+
+**❌ BAD: Unclear names**
+```dart
+final u = getUserData();
+final p = u.map((x) => x.price).toList();
+final t = p.fold(0, (a, b) => a + b);
+```
+
+**✅ GOOD: Descriptive names**
+```dart
+final users = getUserData();
+final prices = users.map((user) => user.price).toList();
+final totalPrice = prices.fold(0, (sum, price) => sum + price);
+```
+
+**Simplify Conditionals:**
+Replace complex conditionals with clearer logic.
+
+**❌ BAD: Complex nested conditionals**
+```dart
+bool isValidUser(User user) {
+  if (user != null) {
+    if (user.isActive) {
+      if (user.email.isNotEmpty) {
+        return true;
+      }
+    }
+  }
+  return false;
+}
+```
+
+**✅ GOOD: Guard clauses**
+```dart
+bool isValidUser(User user) {
+  if (user == null) return false;
+  if (!user.isActive) return false;
+  if (user.email.isEmpty) return false;
+  return true;
+}
+```
+
+#### When NOT to Refactor
+
+- **Don't refactor code you don't understand** - Add tests first to understand behavior
+- **Don't refactor without tests** - Tests verify refactoring didn't break functionality
+- **Don't refactor during feature development** - Separate structural and behavioral changes (see `tidy_first.md`)
+- **Don't refactor code that works and isn't causing problems** - YAGNI principle applies
+
+#### See Also
+
+- **`tidy_first.md`** - Tidy First principles and workflow
+- **`testing.md`** - Full TDD workflow and testing strategies
+- **`general.md`** - Core principles (DRY, intent clarity, small methods, minimal state)
