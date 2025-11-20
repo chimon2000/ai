@@ -339,7 +339,7 @@ When you have a known, finite set of subtypes or variants, always use patterns t
 
 **Rule Quality Standards:**
 - **Focused and Actionable** - Each rule addresses a single domain or concern
-- **Scoped Appropriately** - Keep rules under 500 lines maximum
+- **Scoped Appropriately** - Keep rules under 650 lines maximum
 - **Concrete and Specific** - Always include code examples showing ❌ BAD and ✅ GOOD patterns
 - **Clear and Scannable** - Use bullet points, tables, and code blocks for scannability
 - **Composability** - Rules should be composable and reference each other when needed
@@ -348,7 +348,7 @@ When you have a known, finite set of subtypes or variants, always use patterns t
 - You find yourself repeating the same guidance across multiple conversations
 - A domain has grown complex enough to warrant dedicated documentation (>100 lines)
 - You need to establish patterns for a new technology or framework
-- Existing rules exceed 500 lines and can be logically split
+- Existing rules exceed 650 lines and can be logically split
 
 **Rule Maintenance:**
 - When simplifying rules, aim for 30-50% reduction while preserving all unique patterns
@@ -358,7 +358,7 @@ When you have a known, finite set of subtypes or variants, always use patterns t
 - Verify all code examples still compile and follow current patterns
 
 **Quality Checklist:**
-- [ ] Under 500 lines
+- [ ] Under 650 lines
 - [ ] Includes concrete code examples
 - [ ] Uses ❌ BAD / ✅ GOOD comparisons for anti-patterns
 - [ ] Scannable with clear headings and bullet points

@@ -4,14 +4,21 @@ Universal rules for AI coding assistants working on this project. These rules ap
 
 ## Table of Contents
 
-1. [Core Principles](#core-principles)
-2. [Testing & Quality](#testing--quality)
-3. [Documentation](#documentation)
-4. [Architecture & Organization](#architecture--organization)
-5. [Flutter & Dart](#flutter--dart)
-6. [State Management](#state-management)
-7. [Type Safety](#type-safety)
-8. [Meta Rules](#meta-rules)
+- [AI Agent Rules](#ai-agent-rules)
+  - [Table of Contents](#table-of-contents)
+  - [Core Principles](#core-principles)
+  - [Testing \& Quality](#testing--quality)
+    - [Test-Driven Development (TDD)](#test-driven-development-tdd)
+    - [Testing Trophy Model](#testing-trophy-model)
+    - [Tidy First: Structural Before Behavioral](#tidy-first-structural-before-behavioral)
+    - [Refactoring Guidelines](#refactoring-guidelines)
+  - [Documentation](#documentation)
+  - [Architecture \& Organization](#architecture--organization)
+  - [Flutter \& Dart](#flutter--dart)
+  - [State Management](#state-management)
+  - [Type Safety](#type-safety)
+  - [Meta Rules](#meta-rules)
+  - [Configuration Locations](#configuration-locations)
 
 ---
 
@@ -294,7 +301,7 @@ Universal rules for AI coding assistants working on this project. These rules ap
 
 **Rule Quality Standards:**
 - **Focused and Actionable** - Each rule addresses a single domain or concern
-- **Scoped Appropriately** - Keep rules under 500 lines maximum
+- **Scoped Appropriately** - Keep rules under 650 lines maximum
 - **Concrete and Specific** - Always include code examples showing ❌ BAD and ✅ GOOD patterns
 - **Clear and Scannable** - Use bullet points, tables, and code blocks for scannability
 - **Composability** - Rules should be composable and reference each other when needed
@@ -303,10 +310,10 @@ Universal rules for AI coding assistants working on this project. These rules ap
 - You find yourself repeating the same guidance across multiple conversations
 - A domain has grown complex enough to warrant dedicated documentation (>100 lines)
 - You need to establish patterns for a new technology or framework
-- Existing rules exceed 500 lines and can be logically split
+- Existing rules exceed 650 lines and can be logically split
 
 **Quality Checklist:**
-- [ ] Under 500 lines
+- [ ] Under 650 lines
 - [ ] Includes concrete code examples
 - [ ] Uses ❌ BAD / ✅ GOOD comparisons for anti-patterns
 - [ ] Scannable with clear headings and bullet points

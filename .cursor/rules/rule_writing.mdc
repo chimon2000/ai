@@ -13,8 +13,8 @@ alwaysApply: false
 - Avoid vague phrases like "consider", "might want to", "it's good to"
 
 **Scoped Appropriately:**
-- Keep rules under 500 lines maximum
-- If a rule exceeds 500 lines, split it into multiple composable rules
+- Keep rules under 650 lines maximum
+- If a rule exceeds 650 lines, split it into multiple composable rules
 - Example: Instead of one "frontend.md" rule, create separate rules for "flutter.md", "riverpod.md", "testing.md"
 
 **Concrete and Specific:**
@@ -51,7 +51,7 @@ description: "Brief description of when this rule applies"
 - You find yourself repeating the same guidance across multiple conversations
 - A domain has grown complex enough to warrant dedicated documentation (>100 lines of guidance)
 - You need to establish patterns for a new technology or framework
-- Existing rules exceed 500 lines and can be logically split
+- Existing rules exceed 650 lines and can be logically split
 
 **Don't create a rule when:**
 - The guidance is project-specific and won't apply to future work
@@ -68,7 +68,7 @@ description: "Brief description of when this rule applies"
 - Verify all code examples still compile and follow current patterns
 
 **Quality Checklist:**
-- [ ] Under 500 lines
+- [ ] Under 650 lines
 - [ ] Includes concrete code examples
 - [ ] Uses ❌ BAD / ✅ GOOD comparisons for anti-patterns
 - [ ] Scannable with clear headings and bullet points
