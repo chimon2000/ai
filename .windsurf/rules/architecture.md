@@ -11,6 +11,37 @@ description: "Code organization"
 **Medium** (10-30 screens): Feature-based - ui/[feature]/ with stores
 **Large** (30+ screens): MVU pattern - app/, data/, domain/, ui/ with state/
 
+##### Decision Criteria for Migration
+
+**Migrate Small → Medium when:**
+- Project has 10+ screens or 3+ features
+- Multiple screens share business logic
+- Need to organize related screens together
+- Team size growing (2+ developers)
+- Complexity of state management increasing
+
+**Migrate Medium → Large when:**
+- Project has 30+ screens or 5+ features
+- Complex business logic across multiple layers
+- Need clear separation between data and presentation
+- Team size 3+ developers
+- Reusable domain logic across features
+- API/repository layer becoming complex
+
+**Signs you're ready to migrate:**
+- Current structure feels disorganized
+- Hard to find related files
+- Duplicate code across features
+- Difficult to test business logic
+- New team members struggle with structure
+
+**Signs you're not ready to migrate:**
+- Project still < 10 screens
+- Simple, linear data flow
+- Single developer or very small team
+- Prototype or MVP phase
+- Frequent structural changes expected
+
 ##### Small Project Structure
 
 ```
@@ -50,6 +81,10 @@ lib/
 
 **When to use:** Large projects, complex state, multiple state variations, testing priority
 
+**Medium vs Large:**
+- **Medium**: Store at feature root - `class AuthStore extends AsyncNotifier<User?>`
+- **Large**: Store in state/ subdirectory - `class LoginStore extends Notifier<LoginState>` (with separate state file)
+
 ##### Large Project Structure (MVU Pattern)
 
 ```
@@ -75,7 +110,7 @@ lib/
 
 #### Migration Paths
 
-**Small → Medium:**
+**Small → Medium (when criteria met):**
 
 1. Create `ui/` directory for all UI components
 2. Group related screens into feature folders under `ui/`
@@ -83,15 +118,60 @@ lib/
 4. Add stores for business logic
 5. Keep shared models and services at root level
 6. Move shared widgets to `ui/widgets/`
+7. Update imports and test all features work
 
-**Medium → Large:**
+```bash
+# Before (Small)
+lib/screens/login_screen.dart
+lib/screens/home_screen.dart
+lib/widgets/login_form.dart
+lib/widgets/custom_button.dart
 
-1. Create `data/` layer with repositories and models
-2. Create `domain/` layer with entities and use cases
-3. Reorganize `ui/` with feature-based structure
-4. Move business logic from stores to domain layer
-5. Update stores to use repositories from data layer
-6. Create `core/` for shared utilities and constants
+# After (Medium)
+lib/ui/auth/login_screen.dart
+lib/ui/auth/widgets/login_form.dart
+lib/ui/auth/auth_store.dart
+lib/ui/home/home_screen.dart
+lib/ui/home/home_store.dart
+lib/ui/widgets/buttons/custom_button.dart
+```
+
+**Medium → Large (when criteria met):**
+
+1. Create `app/`, `data/`, `domain/` directories (keep existing `ui/`)
+2. Reorganize features within `ui/` to add sub-feature structure
+3. Refactor stores to MVU pattern:
+   - Create `state/` directory in each feature
+   - Split store into `[feature]_state.dart` (Equatable) and `[feature]_store.dart` (Notifier)
+   - Add `[feature]_event.dart` if using event-driven updates
+4. Extract data models to `data/models/`
+5. Create repositories in `data/repositories/`
+6. Add domain entities in `domain/entities/`
+7. Move app config to `app/`
+8. Extract shared utilities to `core/`
+9. Shared widgets already in `ui/widgets/` (no change needed)
+10. Migrate incrementally - one feature at a time
+
+```bash
+# Before (Medium)
+lib/ui/auth/login_screen.dart
+lib/ui/auth/auth_store.dart
+lib/ui/auth/widgets/login_form.dart
+lib/models/user.dart
+lib/services/api_service.dart
+
+# After (Large with MVU)
+lib/ui/auth/login/login_screen.dart
+lib/ui/auth/login/state/login_state.dart
+lib/ui/auth/login/state/login_store.dart
+lib/ui/auth/login/state/login_event.dart
+lib/ui/auth/login/widgets/login_form.dart
+lib/ui/widgets/buttons/primary_button.dart
+lib/data/models/user.dart
+lib/domain/entities/user_entity.dart
+lib/data/repositories/user_repository.dart
+lib/data/services/api_service.dart
+```
 
 #### General Principles
 

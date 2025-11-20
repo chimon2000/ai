@@ -80,7 +80,7 @@ description: "Rules applied to any Flutter or Dart projects"
 - Use `mocktail` for mocking, not `mockito`
 - Always create `createTestWidget()` helper with `ProviderScope`
 - Use `ScreenUtilInit` wrapper in test widgets
-- Mock controllers by extending `AutoDisposeNotifier` with `Mock`
+- Mock stores by extending `AutoDisposeNotifier` with `Mock`
 - Always use `overrides` parameter for provider testing
 
 #### Code Generation

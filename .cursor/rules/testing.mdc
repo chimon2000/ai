@@ -5,18 +5,17 @@ alwaysApply: true
 
 ##### Test-Driven Development (TDD)
 
-- **ALWAYS write tests first** for any new functionality - no exceptions
-- **ALWAYS follow the Red-Green-Refactor (TDD) cycle** strictly when writing code:
+- **Write tests first** for any new functionality
+- **Follow the Red-Green-Refactor (TDD) cycle** when writing code:
   1. **RED**: Write a failing test that describes the desired behavior
   2. **GREEN**: Write the minimal code to make the test pass
   3. **REFACTOR**: Improve the code while keeping tests green
-- **NEVER write production code without a failing test first**
-- **NEVER skip the refactor step** - always clean up code after making tests pass
-- **ALWAYS run tests after each step** to ensure they pass/fail as expected
+- **Run tests after each step** to ensure they pass/fail as expected
+- **Exception**: Spike/exploration work may skip TDD temporarily, but must be refactored with tests before merging
 
-##### Testing Trophy
+##### Testing Trophy Model
 
-Follow the Testing Trophy model for effective test coverage:
+Follow the Testing Trophy for effective test coverage:
 
 ```
        ___
@@ -37,58 +36,152 @@ Follow the Testing Trophy model for effective test coverage:
 - Type checking with strict mode
 - Compiler errors caught before runtime
 - Custom lint rules (riverpod_lint, custom_lint)
-- Zero cost - catches issues immediately
 
 **Unit Tests (~20%):**
-- Test pure functions, utilities, and models
-- Test complex business logic in isolation
-- Test data transformations and calculations
-- Fast, isolated, no external dependencies
-- Focus on edge cases and corner cases
+- Pure functions, utilities, models
+- Complex business logic in isolation
+- Data transformations and calculations
+- Edge cases and boundary conditions
 
 **Integration Tests (~50% - PRIMARY FOCUS):**
-- Test feature flows with stores and real dependencies
-- Test user interactions and state changes together
-- Test stores with real repositories (mock only external APIs)
-- Test widget + store + service integration
-- Verify data flows through the app correctly
-- Balance between speed and confidence
+- Feature flows with stores and real dependencies
+- User interactions and state changes together
+- Stores with real repositories (mock only external APIs)
+- Widget + store + service integration
+- Data flows through the app
 
 **E2E Tests (~30%):**
-- Test critical user journeys end-to-end
-- Test complete flows: login → dashboard → action → logout
-- Test with real backend (or realistic mocks)
-- Verify app works as users experience it
-- Focus on happy paths and critical business flows
+- Critical user journeys end-to-end
+- Complete flows: login → dashboard → action → logout
+- Real backend (or realistic mocks)
+- Happy paths and critical business flows
+
+**Why Integration Tests are Primary:**
+- ✅ Test how components work together (closer to real usage)
+- ✅ Catch more bugs than isolated unit tests
+- ✅ Resilient to refactoring (test behavior, not implementation)
+- ✅ Balance between speed and confidence
 
 ##### What to Test
 
-**Primary Focus (Integration Tests):**
-- ✅ **User behavior and feature flows** - Test complete user interactions
-- ✅ **Store + Repository + Service integration** - Test data flows through layers
-- ✅ **State management with real dependencies** - Mock only external APIs
-- ✅ **Navigation flows** - Test routing and screen transitions
-- ✅ **Form validation with submission** - Test entire form flow
-- ✅ **Error handling across layers** - Test how errors propagate and display
-- ✅ **Widget + Store integration** - Test UI updates when state changes
+**Integration Tests (Primary):**
+- User behavior and feature flows
+- Store + Repository + Service integration
+- State management with real dependencies (mock only external APIs)
+- Navigation flows and screen transitions
+- Form validation with submission
+- Error handling across layers
+- Widget + Store integration
 
-**Secondary Focus (Unit Tests):**
-- ✅ **Complex business logic** - Calculations, algorithms, transformations
-- ✅ **Pure functions** - Utilities, validators, formatters
-- ✅ **Data models** - Serialization, equality, copyWith
-- ✅ **Edge cases** - Boundary conditions, null handling, error cases
+**Unit Tests (Secondary):**
+- Complex business logic (calculations, algorithms)
+- Pure functions (utilities, validators, formatters)
+- Data models (serialization, equality, copyWith)
+- Edge cases (boundary conditions, null handling)
 
-**Tertiary Focus (E2E Tests):**
-- ✅ **Critical user journeys** - Login, checkout, payment, signup
-- ✅ **Happy paths** - Most common user flows
-- ✅ **Cross-feature flows** - Features working together
-- ✅ **Regression prevention** - Ensure critical paths don't break
+**E2E Tests (Tertiary):**
+- Critical user journeys (login, checkout, payment)
+- Happy paths and common user flows
+- Cross-feature flows
+- Regression prevention
 
 **Don't test:**
-- ❌ Third-party packages (trust they're tested)
+- ❌ Third-party packages
 - ❌ Flutter framework widgets
 - ❌ Generated code (*.g.dart, *.freezed.dart)
 - ❌ Simple getters/setters without logic
-- ❌ UI styling (colors, fonts) - use visual regression testing instead
-- ❌ Implementation details - Test behavior, not internals
+- ❌ UI styling (colors, fonts)
+- ❌ Implementation details
+
+#### When to Apply Testing Trophy
+
+**Use Testing Trophy (50% integration focus) for:**
+- Feature-complete screens with stores and services
+- Complex user workflows and state management
+- Production apps with multiple features
+- Teams prioritizing confidence over speed
+
+**Focus on Unit Tests (80%+ unit focus) for:**
+- Utility libraries and pure functions
+- Complex algorithms or business logic
+- Shared components used across features
+- Performance-critical code
+
+**Use E2E Tests (30%+ E2E focus) for:**
+- Critical user journeys (authentication, payments)
+- Multi-screen workflows
+- Regression prevention for high-value features
+
+#### Unit Testing
+
+##### Store Testing
+
+**Best Practices:**
+- Test all public methods of stores
+- Use `mocktail` for mocking external services
+- Register fallback values with `registerFallbackValue()` for complex types
+- Test Result<T> return types with `.isSuccess()` and `.isError()`
+- Test error handling paths
+- Verify analytics calls are made correctly
+- Test navigation calls with mock router
+
+**Example:**
+
+```dart
+import 'package:flutter_test/flutter_test.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:mocktail/mocktail.dart';
+
+class MockUserService extends Mock implements UserService {}
+
+void main() {
+  late MockUserService mockUserService;
+  late ProviderContainer container;
+
+  setUp(() {
+    mockUserService = MockUserService();
+    container = ProviderContainer(
+      overrides: [
+        userServiceProvider.overrideWithValue(mockUserService),
+      ],
+    );
+  });
+
+  tearDown(() {
+    container.dispose();
+  });
+
+  group('UserStore', () {
+    test('should load user successfully', () async {
+      // Arrange
+      final user = User(id: '1', name: 'John');
+      when(() => mockUserService.getUser('1'))
+          .thenAnswer((_) async => Success(user));
+
+      // Act
+      final store = container.read(UserStore.provider.notifier);
+      final result = await store.loadUser('1');
+
+      // Assert
+      expect(result.isSuccess(), true);
+      expect(result.getOrNull(), user);
+      verify(() => mockUserService.getUser('1')).called(1);
+    });
+
+    test('should handle error when loading user fails', () async {
+      // Arrange
+      when(() => mockUserService.getUser('1'))
+          .thenAnswer((_) async => Failure(Exception('Network error')));
+
+      // Act
+      final store = container.read(UserStore.provider.notifier);
+      final result = await store.loadUser('1');
+
+      // Assert
+      expect(result.isError(), true);
+      expect(result.exceptionOrNull()?.toString(), contains('Network error'));
+    });
+  });
+}
+```
 
