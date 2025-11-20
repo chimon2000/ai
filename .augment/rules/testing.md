@@ -7,18 +7,17 @@ description: "Testing requirements and patterns for TDD, widget testing, and con
 
 ##### Test-Driven Development (TDD)
 
-- **ALWAYS write tests first** for any new functionality - no exceptions
-- **ALWAYS follow the Red-Green-Refactor (TDD) cycle** strictly when writing code:
+- **Write tests first** for any new functionality
+- **Follow the Red-Green-Refactor (TDD) cycle** when writing code:
   1. **RED**: Write a failing test that describes the desired behavior
   2. **GREEN**: Write the minimal code to make the test pass
   3. **REFACTOR**: Improve the code while keeping tests green
-- **NEVER write production code without a failing test first**
-- **NEVER skip the refactor step** - always clean up code after making tests pass
-- **ALWAYS run tests after each step** to ensure they pass/fail as expected
+- **Run tests after each step** to ensure they pass/fail as expected
+- **Exception**: Spike/exploration work may skip TDD temporarily, but must be refactored with tests before merging
 
-##### Testing Trophy
+##### Testing Trophy Model
 
-Follow the Testing Trophy model for effective test coverage:
+Follow the Testing Trophy for effective test coverage:
 
 ```
        ___
@@ -39,82 +38,88 @@ Follow the Testing Trophy model for effective test coverage:
 - Type checking with strict mode
 - Compiler errors caught before runtime
 - Custom lint rules (riverpod_lint, custom_lint)
-- Zero cost - catches issues immediately
 
 **Unit Tests (~20%):**
-- Test pure functions, utilities, and models
-- Test complex business logic in isolation
-- Test data transformations and calculations
-- Fast, isolated, no external dependencies
-- Focus on edge cases and corner cases
+- Pure functions, utilities, models
+- Complex business logic in isolation
+- Data transformations and calculations
+- Edge cases and boundary conditions
 
 **Integration Tests (~50% - PRIMARY FOCUS):**
-- Test feature flows with stores and real dependencies
-- Test user interactions and state changes together
-- Test stores with real repositories (mock only external APIs)
-- Test widget + store + service integration
-- Verify data flows through the app correctly
-- Balance between speed and confidence
+- Feature flows with stores and real dependencies
+- User interactions and state changes together
+- Stores with real repositories (mock only external APIs)
+- Widget + store + service integration
+- Data flows through the app
 
 **E2E Tests (~30%):**
-- Test critical user journeys end-to-end
-- Test complete flows: login → dashboard → action → logout
-- Test with real backend (or realistic mocks)
-- Verify app works as users experience it
-- Focus on happy paths and critical business flows
+- Critical user journeys end-to-end
+- Complete flows: login → dashboard → action → logout
+- Real backend (or realistic mocks)
+- Happy paths and critical business flows
 
-**Why Testing Trophy over Test Pyramid:**
-
-The Testing Trophy emphasizes **integration tests** because they:
+**Why Integration Tests are Primary:**
 - ✅ Test how components work together (closer to real usage)
 - ✅ Catch more bugs than isolated unit tests
-- ✅ Give confidence that features actually work
-- ✅ Are resilient to refactoring (test behavior, not implementation)
-- ✅ Provide good balance of speed and confidence
-
-**Traditional pyramid over-emphasizes unit tests**, which:
-- ❌ Often test implementation details
-- ❌ Break when refactoring (even if behavior unchanged)
-- ❌ Don't catch integration bugs
-- ❌ Give false confidence
+- ✅ Resilient to refactoring (test behavior, not implementation)
+- ✅ Balance between speed and confidence
 
 ##### What to Test
 
-**Primary Focus (Integration Tests):**
-- ✅ **User behavior and feature flows** - Test complete user interactions
-- ✅ **Store + Repository + Service integration** - Test data flows through layers
-- ✅ **State management with real dependencies** - Mock only external APIs
-- ✅ **Navigation flows** - Test routing and screen transitions
-- ✅ **Form validation with submission** - Test entire form flow
-- ✅ **Error handling across layers** - Test how errors propagate and display
-- ✅ **Widget + Store integration** - Test UI updates when state changes
+**Integration Tests (Primary):**
+- User behavior and feature flows
+- Store + Repository + Service integration
+- State management with real dependencies (mock only external APIs)
+- Navigation flows and screen transitions
+- Form validation with submission
+- Error handling across layers
+- Widget + Store integration
 
-**Secondary Focus (Unit Tests):**
-- ✅ **Complex business logic** - Calculations, algorithms, transformations
-- ✅ **Pure functions** - Utilities, validators, formatters
-- ✅ **Data models** - Serialization, equality, copyWith
-- ✅ **Edge cases** - Boundary conditions, null handling, error cases
+**Unit Tests (Secondary):**
+- Complex business logic (calculations, algorithms)
+- Pure functions (utilities, validators, formatters)
+- Data models (serialization, equality, copyWith)
+- Edge cases (boundary conditions, null handling)
 
-**Tertiary Focus (E2E Tests):**
-- ✅ **Critical user journeys** - Login, checkout, payment, signup
-- ✅ **Happy paths** - Most common user flows
-- ✅ **Cross-feature flows** - Features working together
-- ✅ **Regression prevention** - Ensure critical paths don't break
+**E2E Tests (Tertiary):**
+- Critical user journeys (login, checkout, payment)
+- Happy paths and common user flows
+- Cross-feature flows
+- Regression prevention
 
 **Don't test:**
-- ❌ Third-party packages (trust they're tested)
+- ❌ Third-party packages
 - ❌ Flutter framework widgets
 - ❌ Generated code (*.g.dart, *.freezed.dart)
 - ❌ Simple getters/setters without logic
-- ❌ UI styling (colors, fonts) - use visual regression testing instead
-- ❌ Implementation details - Test behavior, not internals
+- ❌ UI styling (colors, fonts)
+- ❌ Implementation details
+
+#### When to Apply Testing Trophy
+
+**Use Testing Trophy (50% integration focus) for:**
+- Feature-complete screens with stores and services
+- Complex user workflows and state management
+- Production apps with multiple features
+- Teams prioritizing confidence over speed
+
+**Focus on Unit Tests (80%+ unit focus) for:**
+- Utility libraries and pure functions
+- Complex algorithms or business logic
+- Shared components used across features
+- Performance-critical code
+
+**Use E2E Tests (30%+ E2E focus) for:**
+- Critical user journeys (authentication, payments)
+- Multi-screen workflows
+- Regression prevention for high-value features
 
 #### Unit Testing
 
-##### Controller Testing
+##### Store Testing
 
 **Best Practices:**
-- Test all public methods of controllers
+- Test all public methods of stores
 - Use `mocktail` for mocking external services
 - Register fallback values with `registerFallbackValue()` for complex types
 - Test Result<T> return types with `.isSuccess()` and `.isError()`
@@ -148,7 +153,7 @@ void main() {
     container.dispose();
   });
 
-  group('UserController', () {
+  group('UserStore', () {
     test('should load user successfully', () async {
       // Arrange
       final user = User(id: '1', name: 'John');
@@ -156,8 +161,8 @@ void main() {
           .thenAnswer((_) async => Success(user));
 
       // Act
-      final controller = container.read(UserController.provider.notifier);
-      final result = await controller.loadUser('1');
+      final store = container.read(UserStore.provider.notifier);
+      final result = await store.loadUser('1');
 
       // Assert
       expect(result.isSuccess(), true);
@@ -171,8 +176,8 @@ void main() {
           .thenAnswer((_) async => Failure(Exception('Network error')));
 
       // Act
-      final controller = container.read(UserController.provider.notifier);
-      final result = await controller.loadUser('1');
+      final store = container.read(UserStore.provider.notifier);
+      final result = await store.loadUser('1');
 
       // Assert
       expect(result.isError(), true);
@@ -292,32 +297,32 @@ expect(find.byKey(MyScreen.listViewKey), findsOneWidget);
 ```
 
 
-##### Controller Testing Pattern
+##### Store Testing Pattern
 ```dart
 import 'package:flutter_test/flutter_test.dart';
 import 'package:sqflite_common_ffi/sqflite_ffi.dart';
 
 void main() {
-  // Only initialize database if controller uses offline storage/persistence
+  // Only initialize database if store uses offline storage/persistence
   TestWidgetsFlutterBinding.ensureInitialized();
   sqfliteFfiInit();
   databaseFactory = databaseFactoryFfi;
 
-  group('FeatureController', () {
+  group('FeatureStore', () {
     test('should have initial state', () {
       final container = ProviderContainer();
-      final controller = container.read(FeatureController.provider);
-      
-      expect(controller.someValue, 'default');
+      final store = container.read(FeatureStore.provider);
+
+      expect(store.someValue, 'default');
     });
 
     test('should update state', () {
       final container = ProviderContainer();
-      final controller = container.read(FeatureController.provider.notifier);
-      
-      controller.updateValue('new value');
-      
-      final state = container.read(FeatureController.provider);
+      final store = container.read(FeatureStore.provider.notifier);
+
+      store.updateValue('new value');
+
+      final state = container.read(FeatureStore.provider);
       expect(state.someValue, 'new value');
     });
   });
@@ -332,14 +337,14 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:mocktail/mocktail.dart';
 import 'package:sqflite_common_ffi/sqflite_ffi.dart';
 
-// Mock Controller for AsyncNotifier
-class MockFeatureController extends AsyncNotifier<FeatureState>
+// Mock Store for AsyncNotifier
+class MockFeatureStore extends AsyncNotifier<FeatureState>
     with Mock
-    implements FeatureController {
+    implements FeatureStore {
   final FeatureState initialState;
   final bool shouldError;
 
-  MockFeatureController({
+  MockFeatureStore({
     this.initialState = const FeatureState(),
     this.shouldError = false,
   });
@@ -355,26 +360,26 @@ class MockFeatureController extends AsyncNotifier<FeatureState>
 
 void main() {
   TestWidgetsFlutterBinding.ensureInitialized();
-  
-  // Only needed if the screen's controller uses offline storage
+
+  // Only needed if the screen's store uses offline storage
   sqfliteFfiInit();
   databaseFactory = databaseFactoryFfi;
 
   group('FeatureScreen Tests', () {
-    late MockFeatureController mockController;
+    late MockFeatureStore mockStore;
 
     Widget createTestWidget({
       FeatureState? state,
       bool shouldError = false,
     }) {
-      mockController = MockFeatureController(
+      mockStore = MockFeatureStore(
         initialState: state ?? const FeatureState(),
         shouldError: shouldError,
       );
 
       return ProviderScope(
         overrides: [
-          FeatureController.provider.overrideWith(() => mockController),
+          FeatureStore.provider.overrideWith(() => mockStore),
         ],
         child: const MaterialApp(home: FeatureScreen()),
       );
@@ -384,7 +389,7 @@ void main() {
       await tester.pumpWidget(
         ProviderScope(
           overrides: [
-            FeatureController.provider.overrideWithBuild((ref, notifier) async {
+            FeatureStore.provider.overrideWithBuild((ref, notifier) async {
               await Future.delayed(const Duration(seconds: 1));
               return const FeatureState();
             }),
@@ -392,11 +397,11 @@ void main() {
           child: const MaterialApp(home: FeatureScreen()),
         ),
       );
-      
+
       // Initial pump shows loading
       await tester.pump();
       expect(find.byType(CircularProgressIndicator), findsOneWidget);
-      
+
       // Complete loading
       await tester.pumpAndSettle();
       expect(find.byType(CircularProgressIndicator), findsNothing);
@@ -424,18 +429,18 @@ void main() {
       expect(find.byKey(const Key('hidden_widget')), findsOneWidget);
     });
 
-    testWidgets('should update when controller state changes', (tester) async {
+    testWidgets('should update when store state changes', (tester) async {
       await tester.pumpWidget(createTestWidget());
       await tester.pumpAndSettle();
 
       // Mock state change
-      when(() => mockController.updateValue(any())).thenAnswer((_) async {
-        mockController.state = AsyncData(
+      when(() => mockStore.updateValue(any())).thenAnswer((_) async {
+        mockStore.state = AsyncData(
           const FeatureState(value: 'updated'),
         );
       });
 
-      await mockController.updateValue('updated');
+      await mockStore.updateValue('updated');
       await tester.pumpAndSettle();
 
       expect(find.text('updated'), findsOneWidget);

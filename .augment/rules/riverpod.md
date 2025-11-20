@@ -7,25 +7,25 @@ description: "Rules applied to a Flutter project that uses Riverpod for state ma
 
 ##### Synchronous (Notifier):
 ```dart
-class FeatureController extends Notifier<FeatureState> {
+class FeatureStore extends Notifier<FeatureState> {
   @override
   FeatureState build() => const FeatureState();
 
   void updateValue(String value) => state = state.copyWith(value: value);
 
-  static final provider = AutoDisposeNotifierProvider<FeatureController, FeatureState>(
-    FeatureController.new,
+  static final provider = AutoDisposeNotifierProvider<FeatureStore, FeatureState>(
+    FeatureStore.new,
   );
 }
 
 // Usage
-final state = ref.watch(FeatureController.provider);
-ref.read(FeatureController.provider.notifier).updateValue('new');
+final state = ref.watch(FeatureStore.provider);
+ref.read(FeatureStore.provider.notifier).updateValue('new');
 ```
 
 ##### Asynchronous (AsyncNotifier):
 ```dart
-class FeatureController extends AsyncNotifier<FeatureState> {
+class FeatureStore extends AsyncNotifier<FeatureState> {
   @override
   Future<FeatureState> build() async => FeatureState(data: await _loadData());
 
@@ -36,13 +36,13 @@ class FeatureController extends AsyncNotifier<FeatureState> {
     });
   }
 
-  static final provider = AutoDisposeAsyncNotifierProvider<FeatureController, FeatureState>(
-    FeatureController.new,
+  static final provider = AutoDisposeAsyncNotifierProvider<FeatureStore, FeatureState>(
+    FeatureStore.new,
   );
 }
 
 // Usage
-final stateAsync = ref.watch(FeatureController.provider);
+final stateAsync = ref.watch(FeatureStore.provider);
 stateAsync.when(
   data: (state) => Text(state.value),
   loading: () => CircularProgressIndicator(),
@@ -55,13 +55,13 @@ stateAsync.when(
 - Use `ref.cacheFor()` for expensive operations that should be cached
 - Use `ref.refreshIn()` for data that should auto-refresh
 
-#### Controller Pattern
+#### Store Pattern
 
-- Separate business logic into controller classes
-- Use `AutoDisposeAsyncNotifier` for async controllers
-- Controllers handle business logic, navigation, analytics
+- Separate business logic into store classes
+- Use `AutoDisposeAsyncNotifier` for async stores
+- Stores handle business logic, navigation, analytics
 - Widgets handle UI rendering and user interactions only
-- Use `Result<T>` for controller methods (Exception as failure type)
+- Use `Result<T>` for store methods (Exception as failure type)
 - Use `ResultDart<T, E>` for custom failure types
 - Use `Result<Unit>` for operations that don't return data
 
@@ -100,9 +100,9 @@ class UserScreen extends ConsumerWidget {
 }
 ```
 
-**✅ GOOD: Business logic in controller**
+**✅ GOOD: Business logic in store**
 ```dart
-class UserController extends AsyncNotifier<User?> {
+class UserStore extends AsyncNotifier<User?> {
   @override
   Future<User?> build() async => null;
 
@@ -116,8 +116,8 @@ class UserController extends AsyncNotifier<User?> {
     return result;
   }
 
-  static final provider = AsyncNotifierProvider<UserController, User?>(
-    UserController.new,
+  static final provider = AsyncNotifierProvider<UserStore, User?>(
+    UserStore.new,
   );
 }
 
@@ -125,7 +125,7 @@ class UserScreen extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     return ElevatedButton(
-      onPressed: () => ref.read(UserController.provider.notifier).loadUser(),
+      onPressed: () => ref.read(UserStore.provider.notifier).loadUser(),
       child: Text('Load User'),
     );
   }
@@ -335,21 +335,21 @@ class _CounterScreenState extends State<CounterScreen> {
 }
 
 // AFTER
-class CounterController extends Notifier<int> {
+class CounterStore extends Notifier<int> {
   @override
   int build() => 0;
   void increment() => state++;
-  static final provider = NotifierProvider<CounterController, int>(CounterController.new);
+  static final provider = NotifierProvider<CounterStore, int>(CounterStore.new);
 }
 
 class CounterScreen extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final count = ref.watch(CounterController.provider);
+    final count = ref.watch(CounterStore.provider);
     return Column(children: [
       Text('Count: $count'),
       ElevatedButton(
-        onPressed: () => ref.read(CounterController.provider.notifier).increment(),
+        onPressed: () => ref.read(CounterStore.provider.notifier).increment(),
         child: Text('Increment'),
       ),
     ]);
@@ -371,15 +371,15 @@ class Counter with ChangeNotifier {
 // widget: final counter = Provider.of<Counter>(context); Text('${counter.count}')
 
 // AFTER
-class CounterController extends Notifier<int> {
+class CounterStore extends Notifier<int> {
   @override
   int build() => 0;
   void increment() => state++;
-  static final provider = NotifierProvider<CounterController, int>(CounterController.new);
+  static final provider = NotifierProvider<CounterStore, int>(CounterStore.new);
 }
 
 // main.dart: ProviderScope(child: MyApp())
-// widget: final count = ref.watch(CounterController.provider); Text('$count')
+// widget: final count = ref.watch(CounterStore.provider); Text('$count')
 ```
 
 **FutureBuilder → AsyncNotifier:**
@@ -419,7 +419,7 @@ class _UserScreenState extends State<UserScreen> {
 }
 
 // AFTER
-class UserController extends AsyncNotifier<User?> {
+class UserStore extends AsyncNotifier<User?> {
   @override
   Future<User?> build() async {
     final result = await ref.read(userServiceProvider).getUser();
@@ -434,13 +434,13 @@ class UserController extends AsyncNotifier<User?> {
     });
   }
 
-  static final provider = AsyncNotifierProvider<UserController, User?>(UserController.new);
+  static final provider = AsyncNotifierProvider<UserStore, User?>(UserStore.new);
 }
 
 class UserScreen extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final userState = ref.watch(UserController.provider);
+    final userState = ref.watch(UserStore.provider);
     return userState.when(
       data: (user) => user != null ? Text(user.name) : Text('No user'),
       loading: () => CircularProgressIndicator(),
@@ -490,7 +490,7 @@ class MessagesScreen extends ConsumerWidget {
 
 #### See Also
 
-- **`testing.md`** - Riverpod-specific testing patterns for controllers, services, and widgets
+- **`testing.md`** - Testing strategy, TDD, and store/widget testing patterns
 - **`flutter.md`** - Flutter/Dart specific rules for error handling and state management
 - **`general.md`** - Core principles (DRY, intent clarity, small methods, minimal state)
 ```

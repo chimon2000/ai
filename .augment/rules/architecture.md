@@ -3,6 +3,10 @@ type: "agent_requested"
 description: "Code organization"
 ---
 
+---
+type: "agent_requested"
+description: "Code organization"---
+
 #### Code Organization
 
 ##### Choosing the Right Structure
@@ -10,6 +14,37 @@ description: "Code organization"
 **Small** (< 10 screens): Flat structure - models/, services/, screens/, widgets/
 **Medium** (10-30 screens): Feature-based - ui/[feature]/ with stores
 **Large** (30+ screens): MVU pattern - app/, data/, domain/, ui/ with state/
+
+##### Decision Criteria for Migration
+
+**Migrate Small → Medium when:**
+- Project has 10+ screens or 3+ features
+- Multiple screens share business logic
+- Need to organize related screens together
+- Team size growing (2+ developers)
+- Complexity of state management increasing
+
+**Migrate Medium → Large when:**
+- Project has 30+ screens or 5+ features
+- Complex business logic across multiple layers
+- Need clear separation between data and presentation
+- Team size 3+ developers
+- Reusable domain logic across features
+- API/repository layer becoming complex
+
+**Signs you're ready to migrate:**
+- Current structure feels disorganized
+- Hard to find related files
+- Duplicate code across features
+- Difficult to test business logic
+- New team members struggle with structure
+
+**Signs you're not ready to migrate:**
+- Project still < 10 screens
+- Simple, linear data flow
+- Single developer or very small team
+- Prototype or MVP phase
+- Frequent structural changes expected
 
 ##### Small Project Structure
 
@@ -83,7 +118,7 @@ lib/
 
 **Medium vs Large:**
 - **Medium**: Store at feature root - `class AuthStore extends AsyncNotifier<User?>`
-- **Large**: Store in state/ subdirectory - `class LoginStore extends Notifier<LoginState>`
+- **Large**: Store in state/ subdirectory - `class LoginStore extends Notifier<LoginState>` (with separate state file)
 
 ##### Large Project Structure (MVU Pattern)
 
@@ -182,7 +217,7 @@ class ProfileState extends Equatable {
   List<Object?> get props => [user, isLoading, error];
 }
 
-// Store (Update)
+// Store (Update) - manages state transitions and side effects
 class ProfileStore extends Notifier<ProfileState> {
   @override
   ProfileState build() => const ProfileState();
@@ -283,7 +318,8 @@ test('ProfileStore loads user', () async {
     overrides: [userRepositoryProvider.overrideWithValue(mockRepo)],
   );
 
-  await container.read(ProfileStore.provider.notifier).loadUser('123');
+  final store = container.read(ProfileStore.provider.notifier);
+  await store.loadUser('123');
   final state = container.read(ProfileStore.provider);
 
   expect(state.user, testUser);
@@ -293,7 +329,7 @@ test('ProfileStore loads user', () async {
 
 ##### Migration Paths
 
-**Small → Medium:**
+**Small → Medium (when criteria met):**
 
 1. Create `ui/` directory for all UI components
 2. Group related screens into feature folders under `ui/`
@@ -301,6 +337,7 @@ test('ProfileStore loads user', () async {
 4. Add stores for business logic
 5. Keep shared models and services at root level
 6. Move shared widgets to `ui/widgets/`
+7. Update imports and test all features work
 
 ```bash
 # Before (Small)
@@ -318,7 +355,7 @@ lib/ui/home/home_store.dart
 lib/ui/widgets/buttons/custom_button.dart
 ```
 
-**Medium → Large (with MVU pattern):**
+**Medium → Large (when criteria met):**
 
 1. Create `app/`, `data/`, `domain/` directories (keep existing `ui/`)
 2. Reorganize features within `ui/` to add sub-feature structure
@@ -332,6 +369,7 @@ lib/ui/widgets/buttons/custom_button.dart
 7. Move app config to `app/`
 8. Extract shared utilities to `core/`
 9. Shared widgets already in `ui/widgets/` (no change needed)
+10. Migrate incrementally - one feature at a time
 
 ```bash
 # Before (Medium)
