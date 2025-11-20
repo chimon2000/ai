@@ -50,11 +50,10 @@ This file consolidates all development rules for Claude Desktop integration. Rul
 ### Testing Strategy
 
 **Test-Driven Development (TDD):**
-- **ALWAYS write tests first** for any new functionality - no exceptions
-- **ALWAYS follow the Red-Green-Refactor (TDD) cycle** strictly
-- **NEVER write production code without a failing test first**
-- **NEVER skip the refactor step** - always clean up code after making tests pass
-- **ALWAYS run tests after each step** to ensure they pass/fail as expected
+- **Write tests first** for any new functionality
+- **Follow the Red-Green-Refactor (TDD) cycle** when writing code
+- **Run tests after each step** to ensure they pass/fail as expected
+- **Exception**: Spike/exploration work may skip TDD temporarily, but must be refactored with tests before merging
 
 **Testing Trophy Model:**
 - **Static Analysis (Foundation)**: Linting, type checking, compiler errors
@@ -62,11 +61,17 @@ This file consolidates all development rules for Claude Desktop integration. Rul
 - **Integration Tests (~50% - PRIMARY FOCUS)**: Feature flows, store + repository integration, widget + store integration
 - **E2E Tests (~30%)**: Critical user journeys, complete flows, happy paths
 
+**Why Integration Tests are Primary:**
+- ✅ Test how components work together (closer to real usage)
+- ✅ Catch more bugs than isolated unit tests
+- ✅ Resilient to refactoring (test behavior, not implementation)
+- ✅ Balance between speed and confidence
+
 **What to Test:**
 - ✅ User behavior and feature flows
 - ✅ Store + Repository + Service integration
-- ✅ State management with real dependencies
-- ✅ Navigation flows
+- ✅ State management with real dependencies (mock only external APIs)
+- ✅ Navigation flows and screen transitions
 - ✅ Form validation with submission
 - ✅ Error handling across layers
 - ✅ Widget + Store integration
@@ -76,6 +81,11 @@ This file consolidates all development rules for Claude Desktop integration. Rul
 - ❌ Simple getters/setters without logic
 - ❌ UI styling (colors, fonts)
 - ❌ Implementation details
+
+**When to Apply Testing Trophy:**
+- **Use Testing Trophy (50% integration focus) for**: Feature-complete screens with stores and services, complex user workflows, production apps, teams prioritizing confidence
+- **Focus on Unit Tests (80%+ unit focus) for**: Utility libraries, complex algorithms, shared components, performance-critical code
+- **Use E2E Tests (30%+ E2E focus) for**: Critical user journeys (authentication, payments), multi-screen workflows, regression prevention
 
 ### Tidy First
 
@@ -164,6 +174,12 @@ This file consolidates all development rules for Claude Desktop integration. Rul
 - **Medium** (10-30 screens): Feature-based - ui/[feature]/ with stores
 - **Large** (30+ screens): MVU pattern - app/, data/, domain/, ui/ with state/
 
+**Decision Criteria for Migration:**
+- **Small → Medium**: 10+ screens, 3+ features, multiple screens share logic, team growing, state complexity increasing
+- **Medium → Large**: 30+ screens, 5+ features, complex business logic, team 3+, reusable domain logic, complex API layer
+- **Signs ready to migrate**: Structure feels disorganized, hard to find files, duplicate code, difficult to test, new members struggle
+- **Signs not ready**: < 10 screens, simple data flow, single developer, prototype/MVP, frequent structural changes
+
 **Small Project Structure:**
 - Use flat structure with models/, services/, screens/, widgets/
 - When to use: < 20 files, simple data flow, prototypes
@@ -177,6 +193,7 @@ This file consolidates all development rules for Claude Desktop integration. Rul
 - **View**: Pure UI (screen widgets) - renders based on state
 - **Update**: Store (Notifier) - manages state transitions and side effects
 - When to use: 30+ screens, complex business logic, large team, clean architecture
+- **Medium vs Large**: Medium has store at feature root; Large has store in state/ subdirectory with separate state file
 
 **General Principles:**
 - Follow existing project structure - don't mix structures
@@ -261,7 +278,7 @@ This file consolidates all development rules for Claude Desktop integration. Rul
 - Use `mocktail` for mocking, not `mockito`
 - Always create `createTestWidget()` helper with `ProviderScope`
 - Use `ScreenUtilInit` wrapper in test widgets
-- Mock controllers by extending `AutoDisposeNotifier` with `Mock`
+- Mock stores by extending `AutoDisposeNotifier` with `Mock`
 - Always use `overrides` parameter for provider testing
 
 **Code Generation:**
@@ -277,7 +294,7 @@ This file consolidates all development rules for Claude Desktop integration. Rul
 **Synchronous (Notifier):**
 - Use `Notifier` for synchronous state management
 - Use `AutoDisposeNotifierProvider` to prevent memory leaks
-- Keep controllers focused on a single feature or domain
+- Keep stores focused on a single feature or domain
 - Use `state = state.copyWith()` for immutable state updates
 - Never mutate state directly - always create new instances
 
@@ -286,6 +303,15 @@ This file consolidates all development rules for Claude Desktop integration. Rul
 - Use `FutureProvider.autoDispose` for one-time async operations
 - Use `ref.cacheFor()` for expensive operations that should be cached
 - Use `ref.refreshIn()` for data that should auto-refresh
+
+**Store Pattern:**
+- Separate business logic into store classes
+- Use `AutoDisposeAsyncNotifier` for async stores
+- Stores handle business logic, navigation, analytics
+- Widgets handle UI rendering and user interactions only
+- Use `Result<T>` for store methods (Exception as failure type)
+- Use `ResultDart<T, E>` for custom failure types
+- Use `Result<Unit>` for operations that don't return data
 
 **Provider Selection Decision Tree:**
 - Is the data async (Future/Stream)? → Use `AsyncNotifier` or `FutureProvider`
